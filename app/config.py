@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     HOST: str = "0.0.0.0"
     PORT: int = 8000
+
+    # Claude API
+    CLAUDE_API_KEY: str = ""
     
     # FoldX
     FOLDX_PATH: str = "C://libs//foldx5_1Win64"
