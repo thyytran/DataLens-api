@@ -1,0 +1,462 @@
+{
+  "info": {
+    "name": "DataLens Mutation Analysis API",
+    "description": "Complete API test suite for DataLens mutation analysis system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "2. Analyze Single Mutation (SA729A - Benign)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has mutation field', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('metadata');",
+              "    pm.expect(jsonData.metadata).to.have.property('mutation');",
+              "});",
+              "",
+              "pm.test('Response has predictions', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('predictions');",
+              "});",
+              "",
+              "pm.test('FoldX ΔΔG is calculated', function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.predictions.stability) {",
+              "        pm.expect(jsonData.predictions.stability).to.have.property('ddg');",
+              "        pm.expect(jsonData.predictions.stability.ddg).to.be.a('number');",
+              "    }",
+              "});",
+              "",
+              "pm.test('Summary is generated', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('summary');",
+              "    pm.expect(jsonData.summary).to.be.a('string');",
+              "    pm.expect(jsonData.summary.length).to.be.above(0);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pdb_id\": \"7lmk\",\n  \"chain\": \"A\",\n  \"position\": 729,\n  \"wt_aa\": \"S\",\n  \"mut_aa\": \"A\",\n  \"alphamissense_score\": 0.12\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/mutations/analyze",
+          "host": ["{{base_url}}"],
+          "path": ["api", "mutations", "analyze"]
+        },
+        "description": "Test benign mutation: Serine to Alanine at position 729"
+      },
+      "response": []
+    },
+    {
+      "name": "3. Analyze Pathogenic Mutation (KA725E)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Mutation is analyzed', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.metadata.mutation).to.equal('KA725E');",
+              "});",
+              "",
+              "pm.test('Charge reversal is detected', function () {",
+              "    var jsonData = pm.response.json();",
+              "    var interpretations = jsonData.interpretations;",
+              "    var hasChargeInterp = interpretations.some(i => i.category === 'charge');",
+              "    pm.expect(hasChargeInterp).to.be.true;",
+              "});",
+              "",
+              "pm.test('High severity interpretation exists', function () {",
+              "    var jsonData = pm.response.json();",
+              "    var interpretations = jsonData.interpretations;",
+              "    var hasHighSeverity = interpretations.some(i => i.severity === 'high');",
+              "    pm.expect(hasHighSeverity).to.be.true;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pdb_id\": \"7lmk\",\n  \"chain\": \"A\",\n  \"position\": 725,\n  \"wt_aa\": \"K\",\n  \"mut_aa\": \"E\",\n  \"alphamissense_score\": 0.89\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/mutations/analyze",
+          "host": ["{{base_url}}"],
+          "path": ["api", "mutations", "analyze"]
+        },
+        "description": "Test pathogenic mutation: Lysine to Glutamic Acid (charge reversal)"
+      },
+      "response": []
+    },
+    {
+      "name": "4. Analyze Large to Small (WA730A)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Size change is detected', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.structural_impact.size_change.description).to.equal('smaller');",
+              "});",
+              "",
+              "pm.test('ΔΔG is destabilizing', function () {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.predictions.stability) {",
+              "        pm.expect(jsonData.predictions.stability.ddg).to.be.above(1.0);",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pdb_id\": \"7lmk\",\n  \"chain\": \"A\",\n  \"position\": 730,\n  \"wt_aa\": \"W\",\n  \"mut_aa\": \"A\",\n  \"alphamissense_score\": 0.78\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/mutations/analyze",
+          "host": ["{{base_url}}"],
+          "path": ["api", "mutations", "analyze"]
+        },
+        "description": "Test large aromatic (Trp) to small (Ala) mutation"
+      },
+      "response": []
+    },
+    {
+      "name": "5. Batch Mutation Analysis",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('All mutations analyzed', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.results).to.be.an('array');",
+              "    pm.expect(jsonData.results.length).to.equal(3);",
+              "});",
+              "",
+              "pm.test('Each result has required fields', function () {",
+              "    var jsonData = pm.response.json();",
+              "    jsonData.results.forEach(function(result) {",
+              "        pm.expect(result).to.have.property('metadata');",
+              "        pm.expect(result).to.have.property('predictions');",
+              "        pm.expect(result).to.have.property('summary');",
+              "    });",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pdb_id\": \"7lmk\",\n  \"mutations\": [\n    {\n      \"chain\": \"A\",\n      \"position\": 729,\n      \"wt_aa\": \"S\",\n      \"mut_aa\": \"A\",\n      \"alphamissense_score\": 0.12\n    },\n    {\n      \"chain\": \"A\",\n      \"position\": 725,\n      \"wt_aa\": \"K\",\n      \"mut_aa\": \"E\",\n      \"alphamissense_score\": 0.89\n    },\n    {\n      \"chain\": \"A\",\n      \"position\": 730,\n      \"wt_aa\": \"W\",\n      \"mut_aa\": \"A\",\n      \"alphamissense_score\": 0.78\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/mutations/batch",
+          "host": ["{{base_url}}"],
+          "path": ["api", "mutations", "batch"]
+        },
+        "description": "Test batch analysis of multiple mutations"
+      },
+      "response": []
+    },
+    {
+      "name": "6. Get Position Scan (All Alternatives)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Returns 19 alternatives', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.alternatives).to.be.an('array');",
+              "    pm.expect(jsonData.alternatives.length).to.equal(19);",
+              "});",
+              "",
+              "pm.test('Each alternative has ΔΔG', function () {",
+              "    var jsonData = pm.response.json();",
+              "    jsonData.alternatives.forEach(function(alt) {",
+              "        pm.expect(alt).to.have.property('mutant');",
+              "        pm.expect(alt).to.have.property('ddg');",
+              "        pm.expect(alt.ddg).to.be.a('number');",
+              "    });",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/mutations/position-scan/7lmk/A/729",
+          "host": ["{{base_url}}"],
+          "path": ["api", "mutations", "position-scan", "7lmk", "A", "729"]
+        },
+        "description": "Get all 19 possible mutations at position 729"
+      },
+      "response": []
+    },
+    {
+      "name": "7. Get AlphaMissense Score",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Returns pathogenicity score', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('score');",
+              "    pm.expect(jsonData.score).to.be.a('number');",
+              "    pm.expect(jsonData.score).to.be.within(0, 1);",
+              "});",
+              "",
+              "pm.test('Returns classification', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('classification');",
+              "    var validClassifications = ['benign', 'likely_benign', 'uncertain', 'likely_pathogenic', 'pathogenic'];",
+              "    pm.expect(validClassifications).to.include(jsonData.classification);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/alphamissense/P62805/729/A",
+          "host": ["{{base_url}}"],
+          "path": ["api", "alphamissense", "P62805", "729", "A"],
+          "query": [
+            {
+              "key": "uniprot_id",
+              "value": "P62805",
+              "description": "UniProt ID for Histone H4",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Get AlphaMissense score for specific mutation"
+      },
+      "response": []
+    },
+    {
+      "name": "8. Error: Invalid Residue Number",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 or 404', function () {",
+              "    pm.expect([400, 404]).to.include(pm.response.code);",
+              "});",
+              "",
+              "pm.test('Error message is provided', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('detail');",
+              "    pm.expect(jsonData.detail).to.be.a('string');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pdb_id\": \"7lmk\",\n  \"chain\": \"A\",\n  \"position\": 60,\n  \"wt_aa\": \"K\",\n  \"mut_aa\": \"E\",\n  \"alphamissense_score\": 0.89\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/mutations/analyze",
+          "host": ["{{base_url}}"],
+          "path": ["api", "mutations", "analyze"]
+        },
+        "description": "Test error handling for invalid residue number"
+      },
+      "response": []
+    },
+    {
+      "name": "9. Error: Invalid Amino Acid Code",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 400 or 422', function () {",
+              "    pm.expect([400, 422]).to.include(pm.response.code);",
+              "});",
+              "",
+              "pm.test('Error mentions invalid amino acid', function () {",
+              "    var jsonData = pm.response.json();",
+              "    var errorText = JSON.stringify(jsonData).toLowerCase();",
+              "    pm.expect(errorText).to.include('amino');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pdb_id\": \"7lmk\",\n  \"chain\": \"A\",\n  \"position\": 729,\n  \"wt_aa\": \"X\",\n  \"mut_aa\": \"Z\",\n  \"alphamissense_score\": 0.89\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/mutations/analyze",
+          "host": ["{{base_url}}"],
+          "path": ["api", "mutations", "analyze"]
+        },
+        "description": "Test error handling for invalid amino acid codes"
+      },
+      "response": []
+    },
+    {
+      "name": "10. Performance: Response Time < 5s",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Response time is less than 5000ms', function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+              "});",
+              "",
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "console.log('Response time:', pm.response.responseTime, 'ms');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"pdb_id\": \"7lmk\",\n  \"chain\": \"A\",\n  \"position\": 729,\n  \"wt_aa\": \"S\",\n  \"mut_aa\": \"A\",\n  \"alphamissense_score\": 0.12\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/mutations/analyze",
+          "host": ["{{base_url}}"],
+          "path": ["api", "mutations", "analyze"]
+        },
+        "description": "Test API performance requirements"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ]
+}

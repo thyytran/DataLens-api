@@ -1,0 +1,57 @@
+# ── Credentials & config ──────────────────────────────────────────────────
+.env
+config.json
+*.key
+*.pem
+
+# ── Python ────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ── Virtual environments ───────────────────────────────────────────────────
+datalensvenv/
+.venv/
+env/
+.env/
+
+# ── FastAPI / Uvicorn ──────────────────────────────────────────────────────
+*.log
+
+# ── Database ───────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── FoldX ─────────────────────────────────────────────────────────────────
+foldx/rotabase.txt
+foldx/*.fxout
+foldx/molecules/
+pdb_cache/
+temp/
+*.fxout
+*.pdb.bak
+
+# ── AlphaMissense data (too large for git) ────────────────────────────────
+data/
+*.csv
+*.tsv
+*.h5
+*.hdf5
+
+# ── Testing ───────────────────────────────────────────────────────────────
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# ── OS ────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ───────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
